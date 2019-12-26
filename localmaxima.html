@@ -58,7 +58,7 @@ So, for any middle element \(E[M_j] = Middle = \frac{N(N-1)(N-2)/3 + N(N-1)/3}{N
 
 <h2>Experimental part</h2>
 Let's verify whether the formula gives the correct result by comparing it with a brute-force solution. The brute-force approach would be to generate each possible arrangement of \(N\) numbers such that each number is from \(0\) to \(N-1\) (which is equivalent in this case to having numbers from \(1\) to \(N\)).
-<p>Runtime complexity of this is \(O(N^N)\), which means we could hope to verify maybe up to \(N=10\).
+<p>Runtime complexity of the naive approach below is \(O(N^{N+1})\) - since it takes \(O(N)\) to verify each of \(N^N\) arrangements - which means we could hope to verify maybe up to \(N=10\).
 <p>Below is a sample program.
 
 <pre><code class='py'>
