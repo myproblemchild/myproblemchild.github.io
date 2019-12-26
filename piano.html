@@ -1,0 +1,69 @@
+<script src="https://rawgit.com/MusicJS/beautiful-piano/master/dist/piano.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+<script
+  src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+  integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E="
+  crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://rawgit.com/MusicJS/beautiful-piano/master/styles.css">
+<style>
+#beautiful-piano .active {
+  background:lightgreen;
+}
+#beautiful-piano div.anchor.active {
+  background:lightgreen;
+}
+</style>
+<body>
+        <div id="chordname"></div>
+        <div id="piano" class="piano-show-names"></div>
+        <script>
+           piano(document.querySelector('#piano'), {range: {startKey: 'C', startOctave: '3', endKey: 'C', endOctave: '5'}, lang: 'en', notation: 'scientific'});
+           var noteNames = ['C', 'Cs', 'D', 'Ds', 'E', 'F', 'Fs', 'G', 'Gs', 'A', 'As', 'B'];
+           var chordNames = {
+             '33': 'Diminished',
+             '34': 'Minor',
+             '43': 'Major',
+             '44': 'Agumented',
+             '333': 'Diminished seventh',
+             '334': 'Half-diminished seventh',
+             '343': 'Minor seventh',
+             '344': 'Minor major seventh',
+             '433': 'Dominant seventh',
+             '434': 'Major seventh',
+             '443': 'Augmented major seventh',
+           };
+           function displayChord(notes, name) {
+              document.querySelector('#chordname').innerHTML = name + ' chord';
+              $('.active').removeClass('active');
+	      _.each(notes, function(note) {
+                $('.' + note).addClass('active');
+	      });
+           }
+           function makeUpChord() {
+             var successiveSteps = [];
+             _(_.random(2, 3)).times(function() {
+	       successiveSteps.push(_.random(3, 4));
+             }); 
+             if (_.isEqual(successiveSteps, [4, 4, 4])) {
+               // This is the only 7th-chord not used in Western music. Try again!
+               return makeUpChord();
+             }
+             // Choose starting note in the left part of piano so that it doesn't overflow.
+             var chordNotesPositions = [_.random(noteNames.length - 1)];
+             _.each(successiveSteps, function(e) {
+	       chordNotesPositions.push(chordNotesPositions[chordNotesPositions.length - 1] + e);
+	     });
+	     console.log(chordNotesPositions);
+             var chordNotesNames = _.map(chordNotesPositions, function(p) {
+               return [noteNames[p % noteNames.length], 3 + (p >= noteNames.length ? 1 : 0)].join(''); 
+             });
+	     console.log(chordNotesNames);
+             return {notes: chordNotesNames, name: chordNames[successiveSteps.join('')]};
+           }
+           function buttonClick() {
+             var notesAndName = makeUpChord();
+             displayChord(notesAndName.notes, notesAndName.name);
+           }
+        </script>
+	<div style="clear: left"><button onclick="buttonClick()" style="height: 5%; width: 30%">Generate chord</button></div>
+</body>
