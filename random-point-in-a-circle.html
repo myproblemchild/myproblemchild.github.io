@@ -29,11 +29,11 @@ Below are various (correct and incorrect) approaches to solve the problem. You''
 Few tehcnical details:
 <ul>
 <li>I'll be using p5js for drawing examples and jstat library for statistical functions.
-<li>As unbelievable as it sounds, javascript does not have a \(seed()\) method, so I'll be using p5js's \(seed\) and \(random\). Also for same technical reasons, assume the problem asks to implement a method \(randPoint(u01)\) that takes a function \(u01\) that returns a random value from a standard uniform distribution \(v \sim U(0,1)\).
+<li>As unbelievable as it sounds, javascript does not have a \(seed()\) method, so I'll be using \(seed\) and \(random\) from p5js. Also for same technical reasons, assume the problem asks to implement a method \(randPoint(u01)\) that takes a function \(u01\) that returns a random value from a standard uniform distribution \(v \sim U(0,1)\).
 </ul>
 
 <h2>Testing the sampling function</h2>
-<p>There are 2 approaches that come to mind: chi-squared and K-S-test. However, below I present much simpler approach.
+<p>There are 2 approaches that come to mind: \(\chi^2\) test and Kolmogorov-Smirnov test. However, below I present much simpler approach that would suffice for the problem at hand.
 <p>In essense, split the circle into small squares and count frequency how many times a square has been sampled.
 <p>Then comptue max to min frequency ratio and compare it to a threshold (that has been chosen empirically). If the value is higher than the threshold, assume the distribution is not uniform.
   <script class='show-code'>
