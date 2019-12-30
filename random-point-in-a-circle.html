@@ -20,16 +20,16 @@
 <h2>Problem statement</h2>
 <p>The other day I stumbled upon a problem on leetcode - <a href='https://leetcode.com/problems/generate-random-point-in-a-circle/'>leet code 478</a>.
 <p>The problem statement essentially is:
-<p>Write a function randPoint() that generates a uniform random point in the unit circle.
+<p>Write a function \(randPoint()\) that generates a uniform random point in the unit circle.
 
 <h2><font color='red'>SPOILER ALERT</font></h2>
-Below are various (correct and incorrect) approaches to solve the problem. You''re advised to try solving this on your own before proceeding.
+Below are various (correct and incorrect) approaches to solve the problem. You're advised to try solving this on your own before proceeding.
 
 <h2>Environment setup</h2>
 Few tehcnical details:
 <ul>
-<li>I'll be using p5js for drawing examples and jstat library for statistical functions.
-<li>As unbelievable as it sounds, javascript does not have a \(seed()\) method, so I'll be using \(seed\) and \(random\) from p5js. Also for same technical reasons, assume the problem asks to implement a method \(randPoint(u01)\) that takes a function \(u01\) that returns a random value from a standard uniform distribution \(v \sim U(0,1)\).
+<li>I'll be using p5js for drawing examples
+<li>As unbelievable as it sounds, javascript does not have a \(seed()\) method, so I'll be using \(seed\) and \(random\) from p5js. Also for same technical reasons, assume the problem asks to implement a method \(randPoint(u01)\) that takes a function \(u01\) that returns a random value from a standard uniform distribution \(v \sim U(0,1)\)
 </ul>
 
 <h2>Testing the sampling function</h2>
@@ -169,7 +169,7 @@ Few tehcnical details:
 <h2>Simple incorrect solution</h2>
 <p>Let's tackle the original prolem now.
 <p>The first solution I came up with was dead simple: generate a random angle \(\varphi \sim  U(0; 2\pi)\), and a random length \(r \sim U(0; 1)\), then return a point \((r \cos(\varphi), r \sin\varphi)\).
-<p>It turns out that this is not a correct solution. In particular, the points won''t be uniformly distributed in a circle. To see why, take a look at a diagram below. These are all points \((r_j \cos(\varphi_i), r_j \sin\varphi_i)\) where \(\varphi_i=\frac{2\pi i}{N}, r_j=\frac{j}{M}\) for \(i=0,1,...,N, j=0,1,...,M\) for some integers \(N\) and \(M\) (in this particular case, \(N=100, M=15\)).
+<p>It turns out that this is not a correct solution. In particular, the points won't be uniformly distributed in a circle. To see why, take a look at a diagram below. These are all points \((r_j \cos(\varphi_i), r_j \sin\varphi_i)\) where \(\varphi_i=\frac{2\pi i}{N}, r_j=\frac{j}{M}\) for \(i=0,1,...,N, j=0,1,...,M\) for some integers \(N\) and \(M\) (in this particular case, \(N=100, M=15\)).
 
   <div id='distr'></div>
   <script>
@@ -197,7 +197,7 @@ Few tehcnical details:
     }, 'distr');
   </script>
 
-<p>It''s easy to see that density is higher closer to the center of the circle and decreases the further we go from the center. Below is what would be a sample of points given by this erroneous method.
+<p>It's easy to see that density is higher closer to the center of the circle and decreases the further we go from the center. Below is what would be a sample of points given by this erroneous method.
   <div id='distr-example' class='show-code'></div>
   <script class='show-code'>
     var randPointIncorrect = function(u01) {
@@ -210,13 +210,13 @@ Few tehcnical details:
   </script>
   
 <p>It actually took me quite some time to understand that this is a problem.
-<p>After I understood the problem with uniform, I was wondering: how does leetcode check the correctness of the function? This is usually not something a typical online judge is capable of doing. More thoughts on this later, and for now let''s proceed to see a simple and working solution.
+<p>After I understood the problem with uniform, I was wondering: how does leetcode check the correctness of the function? This is usually not something a typical online judge is capable of doing. More thoughts on this later, and for now let's proceed to see a simple and working solution.
 
 <h2>Simple and correct solution</h2>
 <p>The next simplest thing to try is a method called "rejection sampling". In essense, pick a random point on a \(2 \times 2\) square. If it is in the unit circle - return it, otherwise try sampling one more time.
 
-<p>What''s the expected number of invocations of \(sampleFromSquare\) for every invocation of \(randPoint\)?
-<p>It''s easy to see that it equals \(\frac{Area_{square}}{Area_{circle}}=\frac{4}{\pi} \approx 1.3 \).
+<p>What's the expected number of invocations of \(sampleFromSquare\) for every invocation of \(randPoint\)?
+<p>It's easy to see that it equals \(\frac{Area_{square}}{Area_{circle}}=\frac{4}{\pi} \approx 1.3 \).
 
 <div id='distr-example-rejection' class='show-code'></div>
 <script class='show-code'>
@@ -241,7 +241,7 @@ Few tehcnical details:
 
 <h2>Rejection sampling with 1 call</h2>
 <p>One might wonder - can we choose a random point on a square with only one sample from \(U(0, 1)\).
-<p>It''s possible if there exists a bijective mapping from a unit square to a unit segment. An example of such mapping can be seen here: <a href='https://demonstrations.wolfram.com/BijectiveMappingOfAnIntervalToASquare/'>https://demonstrations.wolfram.com/BijectiveMappingOfAnIntervalToASquare/</a>. Say we have generated a point \(p \sim U(0, 1)\), take all odd digits to form an \(x\)-coordinate and all even digits to form a \(y\)-coordinate. In the linked demonstration \(base=2\) is chosen, but any other base would work just as well. For example, I have chosen \(base=6\) below.
+<p>It's possible if there exists a bijective mapping from a unit square to a unit segment. An example of such mapping can be seen here: <a href='https://demonstrations.wolfram.com/BijectiveMappingOfAnIntervalToASquare/'>https://demonstrations.wolfram.com/BijectiveMappingOfAnIntervalToASquare/</a>. Say we have generated a point \(p \sim U(0, 1)\), take all odd digits to form an \(x\)-coordinate and all even digits to form a \(y\)-coordinate. In the linked demonstration \(base=2\) is chosen, but any other base would work just as well. For example, I have chosen \(base=6\) below.
 
 <div id='distr-example-uniform-bijection' class='show-code'></div>
 <script class='show-code'>
@@ -284,14 +284,14 @@ Few tehcnical details:
 </script>
 
 <h2>Back to polar coordinates</h2>
-<p>But now let''s come back to the very first approach.
-<p>We''ve seen that choosing \(\varphi \sim U(0, 2\pi)\) and choosing \(r \sim U(0, 1)\) won''t work. Let''s find out the correct distribution to sample l from.
-<p>Let''s split the circle into concentric rings. Consider 2 rings of infinitely small width \(\Delta\). Suppose their radius is \(r_1\) and \(r_2\). Then the area of the first ring can be computed as an area of a rectangle with sides \(len(r_1)\) and \(\Delta\) where \(len(r_1)=2 \pi r_1\), so \(Area_1=\Delta \times 2 \pi r_1\). Same for the second ring - its area is \(Area_2 = \Delta \times 2 \pi r_2\).
+<p>But now let's come back to the very first approach.
+<p>We've seen that choosing \(\varphi \sim U(0, 2\pi)\) and choosing \(r \sim U(0, 1)\) won't work. Let's find out the correct distribution to sample l from.
+<p>Let's split the circle into concentric rings. Consider 2 rings of infinitely small width \(\Delta\). Suppose their radius is \(r_1\) and \(r_2\). Then the area of the first ring can be computed as an area of a rectangle with sides \(len(r_1)\) and \(\Delta\) where \(len(r_1)=2 \pi r_1\), so \(Area_1=\Delta \times 2 \pi r_1\). Same for the second ring - its area is \(Area_2 = \Delta \times 2 \pi r_2\).
 <p>Let \(f(t)\) be a pdf with value \(0\) everywhere outside of \(0 \leq t \leq 1\).
-<p>For \(f\) to be a valid pdf, we require \(\int_0^1 f(t) dt)=1\).
+<p>For \(f\) to be a valid pdf, we require \(\int_0^1 f(t) dt=1\).
 <p>If we want our points to be uniformly distributed, we want to have \(\frac{f(r_1)}{f(r_2)} = \frac{Area_1}{Area_2} = \frac{r_1}{r_2}\).
-<p>This should hold true for any chosen radious \(r_1, r_2\). So let''s choose \(r_2=1\) and assume \(f(r_2)=C\). Then \(f(r_1)=Cr_1\), and this is the only type of function that will satisfy our property of uniformity. Now we only have to find the constant which is easy to do:
-<p> \(\int_0^1 Cr dr) = 1\)
+<p>This should hold true for any chosen radious \(r_1, r_2\). So let's choose \(r_2=1\) and assume \(f(r_2)=C\). Then \(f(r_1)=Cr_1\), and this is the only type of function that will satisfy our property of uniformity. Now we only have to find the constant which is easy to do:
+<p> \(\int_0^1 Cr dr = 1\)
 <p> \(\frac{Cr^2}{2} \vert_0^1 = 1\)
 <p> \(C/2 = 1\)
 <p> \(C = 2\)
@@ -379,7 +379,7 @@ Few tehcnical details:
 </script>
 
 <h2>Yet another decomposition</h2>
-<p>One more way to solve the same problem is to divide the circle with vertical lines into segments (each can be approximated with a rectangle). Then \(pdf(x) = k \times height(x) = 2k\sqrt{1 - x^2}\). After x is chosen, y can be chosen uniformly \(y \sim U(-\sqrt{1 - x^2}, +\sqrt{1 + x^2})\).
+<p>One more way to solve the same problem is to divide the circle with vertical lines into segments (each can be approximated with a rectangle). Then \(pdf(x) = k \times height(x) = 2k\sqrt{1 - x^2}\). After x is chosen, y can be chosen uniformly \(y \sim U(-\sqrt{1 - x^2}, +\sqrt{1 - x^2})\).
 <p>\(\int_{-1}^1 pdf(x) dx = 1\) for it to be a valid pdf.
 <p>\(\int_{-1}^1 2k\sqrt{1-x^2}dx = k\pi\), so \(k = \frac{1}{\pi}\).
 <p>For pdf \(f(x)=\frac{2\sqrt{1-x^2}}{\pi}\) CDF is \(F(x)=x\frac{\sqrt{1-x^2} + \sin^{-1}x}{\pi} + C\) such that \(F(-1)=0\) and \(F(1)=1\).
@@ -462,7 +462,7 @@ Few tehcnical details:
     calculator.setMathBounds({left: -1.2, right: 1.2, bottom: -0.2, top: 2.2});
     </script>
 
-<p>The problem though is I can''t find a way to express \(CDF^{-1}\). However, since CDF is monotonically increasing we can use binary search.
+<p>The problem though is I can't find a way to express \(CDF^{-1}\). However, since CDF is monotonically increasing we can use binary search.
 <p>The code then will look like:
 <div id='distr-circle' class='show-code'></div>
 <script class='show-code'>
@@ -499,7 +499,7 @@ Few tehcnical details:
 </script>
 
 <h2>One final example</h2>
-<p>To conclude, let''s just take a look at distributions that is biased towards outer edge:
+<p>To conclude, let's just take a look at distributions that is biased towards outer edge:
   <div id='biased-towards-edge' class='show-code'></div>
   <script class='show-code'>
     var randPointBiased = function(u01) {
@@ -520,6 +520,7 @@ Few tehcnical details:
       });
   });
 </script>
-</body>
 
+<p><a href='/'>Back to main page</a>
 <p>&copy; Copyright 2019, Iaroslav Tymchenko
+</body>
