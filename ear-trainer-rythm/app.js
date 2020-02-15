@@ -23,6 +23,7 @@ class App {
         this.questionsCorrect_ = -1;
         this.firstSoundShift_ = -1;
         this.tries_ = -1;
+        this.answerInProgress_ = false;
     }
 
     setState(s) {
@@ -75,8 +76,9 @@ class App {
     makeBeforeGameControls() {
         var slider = $('<div id="desync-range"></div>').slider({
             range: true,
-            min: 1,
+            min: 10,
             max: 1000,
+            step: 10,
             values: [500, 700],
             slide: function( event, ui ) {
                 $('#desync-range-message').html('Interval between sounds: ' + ui.values[0] + 'ms - ' + ui.values[1] + 'ms');
@@ -146,9 +148,9 @@ class App {
     }
 
     enableAnswerButtons() {
-        $('#s1-then-s2').prop('disabled', false);
-        $('#s2-then-s1').prop('disabled', false);
-        $('#same-time').prop('disabled', false);
+        $('#s1-then-s2').css({'color': 'black'});
+        $('#s2-then-s1').css({'color': 'black'});
+        $('#same-time').css({'color': 'black'});
     }
 
     updateAskedAnsweredSection() {
@@ -191,7 +193,6 @@ class App {
     }
 
     isCorrectAnswer(answerId) {
-        console.log(answerId);
         if ((answerId == 's1-then-s2') && (this.firstSoundShift_ < 0)) return true;
         if ((answerId == 's2-then-s1') && (this.firstSoundShift_ > 0)) return true;
         if ((answerId == 'same-time') && (this.firstSoundShift_ == 0)) return true;
@@ -199,17 +200,24 @@ class App {
     }
 
     answer(answerId) {
-        $('#' + answerId).prop('disabled', true);
-        var correct = this.isCorrectAnswer(answerId);
-        if (correct) {
-            if (this.tries_ == 0) {
-                this.questionsCorrect_ += 1;
+        var app = this;
+        if (app.answerInProgress_) return;
+
+        app.answerInProgress_ = true;
+        var correct = app.isCorrectAnswer(answerId);
+        $('#' + answerId).animate({'color': correct ? 'green' : 'red'}, 500, function() {
+            app.answerInProgress_ = false;
+            if (correct) {
+                if (app.tries_ == 0) {
+                    app.questionsCorrect_ += 1;
+                }
+                setTimeout(function() { app.questionLoop(); }, 1);
+                return;
+            } else {
+                app.tries_ += 1;
+                app.playSounds();
             }
-            var app = this;
-            setTimeout(function() { app.questionLoop(); }, 1);
-            return;
-        }
-        this.tries_ += 1;
+        });
     }
 
     addReplayButton() {
