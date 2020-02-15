@@ -73,7 +73,34 @@ class App {
         );
     }
 
+    updateDesyncRangeMessage() {
+        $('#input-from').val($('#desync-range').slider('values', 0));
+        $('#input-to').val($('#desync-range').slider('values', 1));
+    }
+
+    updateRangeFromInputs() {
+        var inputFrom = parseInt($('#input-from').val());
+        if (isNaN(inputFrom)) inputFrom = 500;
+        if (inputFrom < 0) inputFrom = 0;
+
+        var inputTo = $('#input-to').val();
+        if (isNaN(inputTo)) inputTo = 700;
+        if (inputTo < 0) inputTo = 0;
+
+        var from = Math.min(inputFrom, inputTo);
+        var to = Math.max(inputFrom, inputTo);
+        $('#desync-range').slider('values', 0, from);
+        $('#desync-range').slider('values', 1, to);
+
+        $('#input-from').val(from);
+        $('#input-to').val(to);
+    }
+
+
     makeBeforeGameControls() {
+        var app = this;
+        var inputFrom = $('<input id="inputFrom"></input>');
+        var inputTo = $('<input id="inputTo"></input>');
         var slider = $('<div id="desync-range"></div>').slider({
             range: true,
             min: 10,
@@ -81,7 +108,7 @@ class App {
             step: 10,
             values: [500, 700],
             slide: function( event, ui ) {
-                $('#desync-range-message').html('Interval between sounds: ' + ui.values[0] + 'ms - ' + ui.values[1] + 'ms');
+                app.updateDesyncRangeMessage();
             }
         });
 
@@ -98,9 +125,17 @@ class App {
         $('#select-sound-1').val('guitar');
         $('#select-sound-2').val('kick');
 
-        $('#content').append('<div id="desync-range-message"></div>').append(slider);
-        $('#desync-range-message').html('Interval between sounds: ' + $('#desync-range').slider('values', 0) +
-                                        'ms - ' + $('#desync-range').slider('values', 1) + 'ms');
+        $('#content').append('<div id="desync-range-message">Interval between sounds: ' +
+                             'from <input id="input-from"></input>ms ' +
+                             '<input id="input-to"></input>ms' +
+                             '</div>').append(slider);
+        $('#input-from').change(function() {
+            app.updateRangeFromInputs();
+        });
+        $('#input-to').change(function() {
+            app.updateRangeFromInputs();
+        });
+        app.updateDesyncRangeMessage();
 
         $('#select-sound-1').selectmenu();
         $('#select-sound-2').selectmenu();
