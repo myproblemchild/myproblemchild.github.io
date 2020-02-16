@@ -215,7 +215,8 @@ class App {
         this.clearAnswerButtons();
         this.makeQuestion();
         this.playSounds();
-        this.updateAskedAnsweredSection(false);
+        // -1 - don't count toward wrong answers yets.
+        this.updateAskedAnsweredSection(0, -1);
     }
 
     clearAnswerButtons() {
@@ -224,12 +225,12 @@ class App {
         $(this.ui_answer_same_time_).css({'color': 'black'});
     }
 
-    updateAskedAnsweredSection(currentQuestionWrong) {
-        var wrong = this.questions_asked_ - this.questions_correct_ - 1;
-        if (currentQuestionWrong) wrong += 1;
+    updateAskedAnsweredSection(delta_correct, delta_wrong) {
+        var correct = this.questions_correct_ + delta_correct;
+        var wrong = this.questions_asked_ - this.questions_correct_ + delta_wrong;
         $(this.ui_asked_answered_).html(
             `Asked questions: ${this.questions_asked_}<br>` +
-                `Correct answers: <font color='green'>${this.questions_correct_}</font><br>` +
+                `Correct answers: <font color='green'>${correct}</font><br>` +
                 `Wrong answers: <font color='red'>${wrong}</font>`
         );
     }
@@ -260,7 +261,14 @@ class App {
         if (app.answer_in_progress_) return;
         app.answer_in_progress_ = true;
         var correct = app.isCorrectAnswer(answer_id);
-        this.updateAskedAnsweredSection(!correct || (app.tries_ > 0));
+
+        var delta_correct = 0;
+        var delta_wrong = 0;
+        if (correct && !app.tries_) {
+            delta_correct = 1;
+            delta_wrong = -1;
+        }
+        this.updateAskedAnsweredSection(delta_correct, delta_wrong);
         $(answer_element).css({'color': correct ? 'green' : 'red'});
         setTimeout(function() {
             app.answer_in_progress_ = false;
