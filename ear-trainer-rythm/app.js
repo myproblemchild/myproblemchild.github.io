@@ -121,7 +121,7 @@ class App {
 
     goLoading() {
         $('#content').html(
-            '<img src="../files/Loading_2.gif"></img>');
+            '<img src="../files/loading.gif"></img>');
         let app = this;
         for (var i = 0; i < this.files_.length; i++) {
             let filename = this.files_[i];
