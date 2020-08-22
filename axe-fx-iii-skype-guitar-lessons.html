@@ -1,0 +1,116 @@
+<html>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-155002640-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-155002640-1');
+</script>
+<head>
+  <title>How I use Axe Fx III for Skype guitar lessons</title>
+  <meta charset='utf-8'>
+</head>
+<body>
+<h1>How I use Axe Fx III for Skype guitar lessons</h1>
+Today is Aug 22, 2020.<br>
+
+<h2>High level overview</h2>
+
+Here I'll explain the setup I have that allows me to have silent guitar lessons.
+Silent here means that the only people who hear my guitar are me and the
+recepient of the Skype call.
+
+You'll need the following components to proceed:
+<ul>
+  <li>Hardware:</li>
+  <ol>
+    <li>Axe Fx III</li>
+    <li>MacBook</li>
+    <li>1/4 jack headhpones</li>
+    <li>guitar cable</li>
+    <li>guitar</li>
+  </ol>
+  <li>Software:</li>
+  <ol>
+    <li>Skype</li>
+    <li>loopback <a href='https://rogueamoeba.com/loopback/'>https://rogueamoeba.com/loopback/</a></li>
+    <li>optional: Axe Fx III edit <a href='https://www.fractalaudio.com/axe-edit/'>https://www.fractalaudio.com/axe-edit/</a></li>
+  </ol>
+</ul>
+
+I plug in guitar and headphones into the front panel of the Axe Fx, chose
+my preset, create a stream of audio [mic + Axe Fx] and route that into
+Skype.
+
+<h2>Axe Fx configuration</h2>
+The preset I use looks like this in Axe Fx III edit:<br>
+
+<img src='./files/axe_fx_iii_preset_1.png' width='50%'><br>
+
+You can ignore the presence of <b>in 2</b> and <b>out 2</b> for now.
+
+<h2>Loopback configuration</h2>
+I have configured the loopback the following way:<br>
+<img src='./files/loopback.png' width='50%'><br>
+
+Here <b>1 (L)</b> and <b>2 (L)</b> outputs of the <b>Axe-Fx III</b> device are
+the left and right streams of the processed guitar sound, and
+<b>Internal microphone</b> is the macbook's mic.
+
+This essentially allows me to mix in my voice and guitar. I have the
+flexibility of adjusting the levels if, for example, my voice can't be heard by
+the recipient.
+
+<h2>Skype configuration</h2> In [Skype] --> [Audio & Video settings] I
+configure <b>Microphone</b> and <b>Speakers</b> like this:<br>
+<img src='./files/skype_settings.png' width='50%'><br> I also
+use <b>Test call</b> during which I say something and play a little to
+understand what the recipient will hear.
+
+<h2>A note about metronome</h2> Back to Axe Fx preset. One
+constant struggle I have with Axe Fx III is metronome. There are
+numerous threads
+(e.g.
+<a href='https://forum.fractalaudio.com/threads/metronome-block.148678/'>here</a>)
+where others describe inconvenience of the stock metronome, but I
+haven't seen any improvements recently.
+
+If I use the standard metronome from Axe Fx III, I need to keep in
+mind that the
+<b>Output 1</b> level controls what <b>*I*</b> hear, and <b>USB /
+Digital</b> controls what <b>*recipient*</b> hears. So using metronome
+like this results in wasted time for adjusting levels (again, I can't
+hear what recipient hears. Is it too loud for them? Or they can't hear
+it at all? I will never know - I can only adjust following their
+suggestions). Let's say I don't need a metronome for few minutes. Then
+I need to remember to turn off volumes on both knobs and I need to
+remember the values we have found so that I can restore it when
+needed. Obviously the values of <b>USB / Digital</b> are always
+configured on the spot since even my proximity to the microphone will
+influence what level I should set the metronome too.<br>
+<img src='./files/axe_fx_iii_preset_2.png' width='50%'><br>
+
+In addition, the metronome of Axe Fx III doesn't support placing
+various accents (e.g. 3/8 with accent on 1st or 5/8 with accents on
+1st and 3rd) - every click of it sounds absolutely the same.
+
+Given all of the above, I decided it's worth the complication to use
+the external metronome from the phone - I'm connecting the phone to
+the Axe Fx III with Y-cable and that's where <b>In 2</b> comes in.
+<b>Out 2</b> is used to have a separate audio stream with external
+metronome - which I can then capture in the DAW.
+
+<h2>Observed problems</h2>
+Sometimes - under conditions which I have been too busy or lazy to
+pinpoint exactly - the Axe Fx stops being treated as a sound
+card completely. And some other times the recipient can only hear my voice
+(but not guitar) or vice versa. In these cases I have found that unplugging
+Axe Fx and plugging back into <b>a *different*</b> USB port does the trick.
+
+<p><a href='/'>Back to main page</a>
+<p>&copy; Copyright 2020, Iaroslav Tymchenko
+
+</body>
+</html>
