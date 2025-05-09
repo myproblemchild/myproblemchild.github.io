@@ -84,6 +84,11 @@
             color: green;
             pointer-events: none;
         }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -242,22 +247,22 @@
             });
 
             if (sliderVals[0].val1 > sliderVals[0].val2) {
-                setText('Top circle should be left of top triangle')
+                setText('<p class="error">Top circle should be left of top triangle</p>')
                 return false
             }
 
             if (sliderVals[0].val1 >= sliderVals[1].val1) {
-                setText('Top circle should be left of bottom circle')
+                setText('<p class="error">Top circle should be left of bottom circle</p>')
                 return false
             }
             if (sliderVals[0].val2 >= sliderVals[1].val2) {
-                setText('Top triangle should be left of bottom triangle')
+                setText('<p class="error">Top triangle should be left of bottom triangle</p>')
                 return false
             }
             let max1 = Math.max(sliderVals[0].val1, sliderVals[0].val2)
             let min2 = Math.min(sliderVals[1].val1, sliderVals[1].val2)
             if (max1 < min2) {
-                setText('Segments should overlap')
+                setText('<p class="error">Segments should overlap</p>')
                 return false
             }
 
