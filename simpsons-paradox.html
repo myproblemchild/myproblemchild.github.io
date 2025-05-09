@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dual-Thumb Sliders (Circle & Triangle)</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 2rem;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        .slider-wrapper {
+            margin-bottom: 2rem;
+        }
+
+        .slider {
+            position: relative;
+            height: 30px;
+            user-select: none;
+        }
+
+        .track {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+            transform: translateY(-50%);
+        }
+
+        .range {
+            position: absolute;
+            top: 50%;
+            height: 4px;
+            background: #0d6efd;
+            border-radius: 2px;
+            transform: translateY(-50%);
+        }
+
+        .handle {
+            position: absolute;
+            top: 50%;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            border: 2px solid #0d6efd;
+        }
+
+        .handle-val1 {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #0d6efd;
+        }
+
+        .handle-val2 {
+            /* keep your size & clip-path */
+            width: 20px;
+            height: 20px;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+
+            /* make it solid black */
+            background: #0d6efd;
+            border: none;
+        }
+
+        .values {
+            text-align: center;
+            font-family: monospace;
+            margin-top: 0.5rem;
+        }
+
+        .marker {
+            position: absolute;
+            top: 0%;
+            left: 0%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            color: green;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>
+        <center>Simpson's paradox</center>
+    </h1>
+    <p>
+        Consider 2 doctors Doc and Tor that treat 2 diseases: 🔵 (heart disease) and ▲ (flu)<br>
+    <ul>
+        <li>Doc also has a higher success rate than Tor when treating 🔵</li>
+        <li>Doc has a higher success rate than Tor when treating ▲</li>
+    </ul>
+    </p>
+    <p>
+        However, the annual report shows that Tor has a higher overall success rate than Doc.
+        How is this possible?
+    </p>
+
+    <h2>
+        <center>Interactive demo</center>
+    </h2>
+    <p>
+        The answer is: by carefully choosing the number of patients each doctor seen for every desease,
+        we can craft an example that shows Tor in a preferable light.
+    </p>
+    <hr>
+
+    <!-- Slider #1 -->
+
+    <h2>Tor</h2>
+    <p>Move sliders to set success rates</p>
+    <div class="slider-wrapper">
+        <div class="slider">
+            <div class="track"></div>
+            <div class="range"></div>
+            <div class="handle handle-val1"></div>
+            <div class="handle handle-val2"></div>
+            <div class="marker">*</div>
+        </div>
+        <div class="values">[<span class="val1">0.15</span>, <span class="val2">0.35</span>]</div>
+    </div>
+
+    <!-- Slider #2 -->
+    <h2>Doc</h2>
+    <p>Move sliders to set success rates</p>
+    <div class="slider-wrapper">
+        <div class="slider">
+            <div class="track"></div>
+            <div class="range"></div>
+            <div class="handle handle-val1"></div>
+            <div class="handle handle-val2"></div>
+            <div class="marker">*</div>
+        </div>
+        <div class="values">[<span class="val1">0.20</span>, <span class="val2">0.40</span>]</div>
+    </div>
+
+    <hr>
+    <div id="example"></div>
+
+    <h2>
+        <center>Explanation</center>
+    </h2>
+    <p>The core of the paradox lies at the fact that we naturally assume that the overall success rate is in the
+        center of the segment. However, it's not always so. By choosing the numbers we can shift overall success
+        rate to the left or to the right. It will always be within the segment, but not necessarily will be the
+        midpoint.</p>
+    <p>If we have 2 segments such that ...
+    <ul>
+        <li>each segment represents a doctor</li>
+        <li>min point of each segment is a success rate for 🔵</li>
+        <li>max point of each segment is a success rate for ▲</li>
+        <li>and S1(🔵) &lt S2(🔵)</li>
+        <li>and S1(▲) &lt S2(▲)</li>
+    </ul>
+    ... we can still choose 2 points p1 from the first segment and p2 from the second segment such that
+    S1(✳) &lt S2(✳). We can then carefully choose the numbers in a way that overall success rates have
+    the value corresponding to ✳ on each segment.
+    Specifically, if we assume that the total number of cases is TOTAL and success rates for each case are 🔵 and ▲ and
+    the desired overall rate is ✳,
+    then the total number of cases in category 🔵 is (▲-✳)/(▲-🔵) * TOTAL, and in category ▲ is TOTAL minus total number
+    of cases in category 🔵.
+    </p>
+    <p>
+        So if we take a look at the intersection of S1 and S2 - it will be some segment S3. We take its mid point.
+        Then ✳ for S1 is any point to the right of midpoint of S3 and ✳ for S2 is any point to the mid of midpoint of
+        S3.
+    </p>
+    <h2>
+        <center>Outro</center>
+    </h2>
+    <p>
+        Note: there are many scenarios where this paradox can arise:
+    <ul>
+        <li>Automobile brands Auto and Mobile experiencing 🔵 (engine problem) and ▲ (wipers problem)</li>
+        <li>Junior and Senior sotware developers fixing 🔵 (frontend button color issues) and ▲ (compiler bugs)</li>
+        <li>and so on</li>
+    </ul>
+    </p>
+
+
+    <script>
+        const sliderVals = [
+            { val1: 0, val2: 0, summary: null },
+            { val1: 0, val2: 0, summary: null },
+        ];
+
+        function setText(txt) {
+            document.querySelector('#example').innerHTML = txt
+        }
+
+        function solve(sliderVals) {
+            let total = 1000000
+
+            // Rates
+            let l = Math.min(sliderVals.val1, sliderVals.val2)
+            let r = Math.max(sliderVals.val1, sliderVals.val2)
+
+            // Totals
+            let lv = Math.round((r - sliderVals.summary) / (r - l) * total)
+            let rv = total - lv
+
+            // Successes
+            let ls = Math.round(lv * l)
+            let rs = Math.round(rv * r)
+            let ss = ls + rs
+
+            let s = ss / total
+
+            return {
+                l,
+                ls,
+                lv,
+
+                r,
+                rs,
+                rv,
+
+                s,
+                ss,
+                sv: total,
+            }
+        }
+
+        function textSummary(res) {
+            return `
+            ▲${res.ls}/${res.lv}=${Math.round(res.lv * res.l) / res.lv}<br>
+            🔵${res.rs}/${res.rv}=${Math.round(res.rv * res.r) / res.rv}<br>
+            ✳(${res.ls} + ${res.rs}) / (${res.lv} + ${res.rv}) = ${res.ls + res.rs} / ${res.lv + res.rv} = ${(res.ls + res.rs) / (res.lv + res.rv)}<br>`
+        }
+
+        function f() {
+            document.querySelectorAll('.slider-wrapper').forEach((w, i) => {
+                w.querySelector('.marker').style.visibility = 'hidden';
+            });
+
+            if (sliderVals[0].val1 > sliderVals[0].val2) {
+                setText('Top circle should be left of top triangle')
+                return false
+            }
+
+            if (sliderVals[0].val1 >= sliderVals[1].val1) {
+                setText('Top circle should be left of bottom circle')
+                return false
+            }
+            if (sliderVals[0].val2 >= sliderVals[1].val2) {
+                setText('Top triangle should be left of bottom triangle')
+                return false
+            }
+            let max1 = Math.max(sliderVals[0].val1, sliderVals[0].val2)
+            let min2 = Math.min(sliderVals[1].val1, sliderVals[1].val2)
+            if (max1 < min2) {
+                setText('Segments should overlap')
+                return false
+            }
+
+            let mid = (max1 + min2) / 2
+            sliderVals[0].summary = (mid + max1) / 2
+            sliderVals[1].summary = (mid + min2) / 2
+
+            // now update both markers whenever f() runs
+            document.querySelectorAll('.slider-wrapper').forEach((w, i) => {
+                if (sliderVals[i].summary != null) {
+                    w.querySelector('.marker').style.left =
+                        (sliderVals[i].summary * 100) + '%';
+                    w.querySelector('.marker').style.visibility = 'visible';
+                }
+            });
+
+            let res1 = solve(sliderVals[0])
+            let res2 = solve(sliderVals[1])
+
+            setText(`Doc:<br>${textSummary(res1)}<br>Tor:<br>${textSummary(res2)}`)
+        }
+
+        document.querySelectorAll('.slider-wrapper').forEach((wrapper, idx) => {
+            const slider = wrapper.querySelector('.slider');
+            const rangeBar = wrapper.querySelector('.range');
+            const hVal1 = wrapper.querySelector('.handle-val1');
+            const hVal2 = wrapper.querySelector('.handle-val2');
+            const val1Label = wrapper.querySelector('.val1');
+            const val2Label = wrapper.querySelector('.val2');
+            const marker = wrapper.querySelector('.marker');
+
+            sliderVals[idx].val1 = parseFloat(val1Label.textContent);
+            sliderVals[idx].val2 = parseFloat(val2Label.textContent);
+
+            function pxToPct(px) {
+                return (px / slider.clientWidth) * 100;
+            }
+
+            function updatePositions() {
+                const lowPct = Math.min(sliderVals[idx].val1, sliderVals[idx].val2) * 100;
+                const highPct = Math.max(sliderVals[idx].val1, sliderVals[idx].val2) * 100;
+                hVal1.style.left = (sliderVals[idx].val1 * 100) + '%';
+                hVal2.style.left = (sliderVals[idx].val2 * 100) + '%';
+                rangeBar.style.left = lowPct + '%';
+                rangeBar.style.width = (highPct - lowPct) + '%';
+                val1Label.textContent = Math.min(sliderVals[idx].val1, sliderVals[idx].val1).toFixed(2);
+                val2Label.textContent = Math.max(sliderVals[idx].val1, sliderVals[idx].val2).toFixed(2);
+                f();
+            }
+
+            function startDrag(handle) {
+                const onMove = e => {
+                    const rect = slider.getBoundingClientRect();
+                    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+                    let pct = Math.min(Math.max(x, 0), rect.width);
+                    pct = Math.round((pct / rect.width) * 100) / 100;
+                    if (handle === 'val1') sliderVals[idx].val1 = pct;
+                    else sliderVals[idx].val2 = pct;
+                    updatePositions();
+                };
+                const onUp = () => {
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('touchmove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                    document.removeEventListener('touchend', onUp);
+                };
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('touchmove', onMove);
+                document.addEventListener('mouseup', onUp);
+                document.addEventListener('touchend', onUp);
+            }
+
+            hVal1.addEventListener('mousedown', () => startDrag('val1'));
+            hVal1.addEventListener('touchstart', () => startDrag('val1'));
+            hVal2.addEventListener('mousedown', () => startDrag('val2'));
+            hVal2.addEventListener('touchstart', () => startDrag('val2'));
+
+            updatePositions();
+            f();
+        });
+    </script>
+    <p><a href='/'>Back to main page</a>
+    <p>&copy; Copyright 2025, Iaroslav Tymchenko
+</body>
+
+</html>
