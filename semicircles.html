@@ -1,7 +1,4 @@
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.0.0/es5/tex-mml-chtml.js">
-</script>
 <script>
-
     // Generate n random angles in [0, 2π)
     function generateNAngles(n) {
         let angles = Array.from({ length: n }, () => Math.random() * 2 * Math.PI);
@@ -121,7 +118,75 @@
 
     }
 
-    function main() {
+    let f = (n) => n / Math.pow(2, n - 1);
+    function approx(n, Q) {
+        let uncovered = 0;
+        for (let i = 0; i < Q; i++) {
+            fullDiskCovered(generateNAngles(n)) || uncovered++;
+        }
+        return uncovered / Q;
+    }
+
+    async function fillProbTable(Q) {
+        const tbody = document.querySelector("#probTable tbody");
+        tbody.innerHTML = "";
+
+        for (let N = 0; N <= 10; N++) {
+            const theory = f(N);
+            const exp = approx(N, Q);
+
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+            <td>${N}</td>
+            <td>${theory.toFixed(6)}</td>
+            <td>${exp.toFixed(6)}</td>
+        `;
+            tbody.appendChild(row);
+        }
+    }
+
+    function simulateThrows() {
+        let angles = [];
+        while (!fullDiskCovered(angles)) {
+            angles.push(Math.random() * 2 * Math.PI);
+            angles.sort();  // keep sorted for fullDiskCovered
+        }
+        return angles.length;
+    }
+
+    function simulateAverageN(Q) {
+        let ns = [];
+
+        for (let i = 0; i < Q; i++) {
+            ns.push(simulateThrows());
+        }
+
+        let s = 0;
+        for (var i = 0; i < ns.length; i++) {
+            s += ns[i];
+        }
+        return s / Q;
+    }
+
+    async function fillExpectedNTable(Q) {
+        let n = simulateAverageN(Q);
+
+        const tbody = document.querySelector("#expectedN tbody");
+        tbody.innerHTML = "";
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>(work in progress)</td>
+            <td>${n}</td>
+        `;
+        tbody.appendChild(row);
+    }
+
+    async function main() {
+        fillProbTable(10000);
+        fillExpectedNTable(10000);
+
         const slider = document.getElementById("slider");
         const nValue = document.getElementById("nValue");
         const anglesOutput = document.getElementById("anglesOutput");
@@ -135,8 +200,8 @@
 
             // Format and display angles
             var output = angles.map(a => a.toFixed(4));
-            output.push(`Full disk covered? ${fullDiskCovered(angles) ? "Yes" : "No"}`);
-            anglesOutput.textContent = output.join("\n");
+            output.push(`\nFull disk covered? ${fullDiskCovered(angles) ? "Yes" : "No"}`);
+            anglesOutput.textContent = output.join("  ");
         }
 
         slider.addEventListener("input", update);
@@ -164,6 +229,7 @@
 </style>
 
 <body onload="main()">
+    <h1>Random semicircles covering a circle</h1>
     <svg id="example" width="600" height="600" viewBox="-1 -1 2 2"></svg>
 
     <div>
@@ -183,5 +249,30 @@
     <h3>Covered examples</h3>
     <div id="examples-covered" class="example-row"></div>
 
+    <hr>
+    <h3>Probability of being covered with N throws</h3>
+    <table id="probTable" border="1" style="border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th>N</th>
+                <th>Formula</th>
+                <th>Experiment</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <hr>
+    <h3>Expected number of throws to cover</h3>
+    <table id="expectedN" border="1" style="border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th>Formula</th>
+                <th>Experiment</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
 
 </body>
