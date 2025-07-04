@@ -183,6 +183,17 @@
         tbody.appendChild(row);
     }
 
+    async function updateExapmleSvgs() {
+        document.getElementById("examples-uncovered").innerHTML = "";
+        document.getElementById("examples-covered").innerHTML = "";
+
+        [3, 4, 5, 6, 7, 8, 9, 10].forEach(N => {
+            createExampleSvg("examples-uncovered", N, false);
+            createExampleSvg("examples-covered", N, true);
+        });
+
+    }
+
     async function main() {
         fillProbTable(10000);
         fillExpectedNTable(10000);
@@ -207,11 +218,7 @@
         slider.addEventListener("input", update);
 
         update();
-
-        [3, 4, 5, 6, 7, 8, 9, 10].forEach(N => {
-            createExampleSvg("examples-uncovered", N, false);
-            createExampleSvg("examples-covered", N, true);
-        });
+        updateExapmleSvgs();
     }
 </script>
 
@@ -230,6 +237,8 @@
 
 <body onload="main()">
     <h1>Random semicircles covering a circle</h1>
+    <p>We talk about semicircles, but it's easier to visualize disk and sectors that cover it.</p>
+
     <svg id="example" width="600" height="600" viewBox="-1 -1 2 2"></svg>
 
     <div>
@@ -248,6 +257,8 @@
 
     <h3>Covered examples</h3>
     <div id="examples-covered" class="example-row"></div>
+
+    <button onclick="updateExapmleSvgs()">Generate new examples</button>
 
     <hr>
     <h3>Probability of being covered with N throws</h3>
@@ -275,4 +286,6 @@
         </tbody>
     </table>
 
+    <p><a href='/'>Back to main page</a>
+    <p>&copy; Copyright 2025, Iaroslav Tymchenko
 </body>
