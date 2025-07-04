@@ -1,0 +1,71 @@
+<script>
+    function drawSemicircles(svgId, angles) {
+        const svg = document.getElementById(svgId);
+        const cx = 0;
+        const cy = 0;
+        const r = 0.8;
+
+        // Add background circle
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", cx);
+        circle.setAttribute("cy", cy);
+        circle.setAttribute("r", r);
+        circle.setAttribute("fill", "white");
+        circle.setAttribute("stroke", "black");
+        circle.setAttribute("stroke-width", "0.001");
+        svg.appendChild(circle);
+
+        // Draw semicircle segments
+        angles.forEach(theta => {
+            const x1 = cx + r * Math.cos(theta);
+            const y1 = cy + r * Math.sin(theta);
+            const x2 = cx + r * Math.cos(theta + Math.PI);
+            const y2 = cy + r * Math.sin(theta + Math.PI);
+
+            const largeArc = 0;
+
+            const pathData = [
+                `M ${cx} ${cy}`,
+                `L ${x1} ${y1}`,
+                `A ${r} ${r} 0 ${largeArc} 0 ${x2} ${y2}`,
+                `Z`
+            ].join(" ");
+
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", pathData);
+            path.setAttribute("fill", "rgba(0,0,0,0.5)");
+            path.setAttribute("stroke", "rgba(0,0,0,0.5)");
+            path.setAttribute("stroke-width", "0.01");
+
+            svg.appendChild(path);
+        });
+    }
+
+    function main() {
+        const slider = document.getElementById("slider");
+        const nValue = document.getElementById("nValue");
+
+        function update() {
+            const N = Number(slider.value);
+            nValue.textContent = N;
+
+            // Generate N random angles in [0, 2π)
+            const angles = Array.from({ length: N }, () => Math.random() * 2 * Math.PI);
+            drawSemicircles('example', angles);
+        }
+
+        slider.addEventListener("input", update);
+
+        update();
+    }
+</script>
+
+<body onload="main()">
+    <svg id="example" width="600" height="600" viewBox="-1 -1 2 2"></svg>
+    <label>
+        N:
+        <input type="range" id="slider" min="0" max="10" value="2" />
+        <span id="nValue">0</span>
+    </label>
+
+</body>
