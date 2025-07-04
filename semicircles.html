@@ -1,0 +1,291 @@
+<script>
+    // Generate n random angles in [0, 2π)
+    function generateNAngles(n) {
+        let angles = Array.from({ length: n }, () => Math.random() * 2 * Math.PI);
+        angles.sort();
+        return angles;
+    }
+
+    function drawSemicircles(svgId, angles) {
+        const svg = document.getElementById(svgId);
+        svg.innerHTML = "";
+
+        const cx = 0;
+        const cy = 0;
+        const r = 0.8;
+
+        // Create mask
+        const mask = document.createElementNS("http://www.w3.org/2000/svg", "mask");
+        const maskId = svgId + "_mask";
+        mask.setAttribute("id", maskId);
+
+        // White rectangle to start with fully visible mask
+        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("x", -1);
+        rect.setAttribute("y", -1);
+        rect.setAttribute("width", 2);
+        rect.setAttribute("height", 2);
+        rect.setAttribute("fill", "white");
+        mask.appendChild(rect);
+
+        svg.appendChild(mask);
+
+        // Green circle with mask applied
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", cx);
+        circle.setAttribute("cy", cy);
+        circle.setAttribute("r", r);
+        circle.setAttribute("fill", "lime");
+        circle.setAttribute("stroke", "black");
+        circle.setAttribute("stroke-width", "0.01");
+        circle.setAttribute("mask", `url(#${maskId})`);
+        svg.appendChild(circle);
+
+        angles.forEach(theta => {
+            const x1 = cx + r * Math.cos(theta);
+            const y1 = cy + r * Math.sin(theta);
+            const x2 = cx + r * Math.cos(theta + Math.PI);
+            const y2 = cy + r * Math.sin(theta + Math.PI);
+
+            const largeArc = 0;
+            const sweep = 0;
+
+            const pathData = [
+                `M ${cx} ${cy}`,
+                `L ${x1} ${y1}`,
+                `A ${r} ${r} 0 ${largeArc} ${sweep} ${x2} ${y2}`,
+                `Z`
+            ].join(" ");
+
+            // Create gray visible semicircle
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", pathData);
+            path.setAttribute("fill", "rgba(0,0,0,0.4)");
+            path.setAttribute("stroke", "black");
+            path.setAttribute("stroke-width", "0.01");
+            svg.appendChild(path);
+
+            // Create black shape in mask
+            const maskPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            maskPath.setAttribute("d", pathData);
+            maskPath.setAttribute("fill", "black");
+            mask.appendChild(maskPath);
+        });
+    }
+
+
+    function fullDiskCovered(angles) {
+        if (angles.length < 3) {
+            return false;
+        }
+        angles = angles.concat(angles[0] + 2 * Math.PI);
+        for (var i = 1; i < angles.length; i++) {
+            if (angles[i] - angles[i - 1] > Math.PI) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function generateExamples(N, shouldBeCovered) {
+        while (true) {
+            const angles = generateNAngles(N);
+            if (fullDiskCovered(angles) === shouldBeCovered) {
+                return angles;
+            }
+        }
+    }
+
+    function createExampleSvg(parentId, N, shouldBeCovered) {
+        const angles = generateExamples(N, shouldBeCovered);
+        const container = document.getElementById(parentId);
+
+        const block = document.createElement("div");
+        block.className = "example-block";
+
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("width", "150");
+        svg.setAttribute("height", "150");
+        svg.setAttribute("viewBox", "-1 -1 2 2");
+        block.appendChild(svg);
+
+        const caption = document.createElement("div");
+        caption.textContent = `N = ${N}, covered: ${shouldBeCovered ? "Yes" : "No"}`;
+        block.appendChild(caption);
+
+        container.appendChild(block);
+        drawSemicircles(svg.id = "tempSvg" + Math.floor(Math.random() * 1000000), angles);
+
+    }
+
+    let f = (n) => n / Math.pow(2, n - 1);
+    function approx(n, Q) {
+        let uncovered = 0;
+        for (let i = 0; i < Q; i++) {
+            fullDiskCovered(generateNAngles(n)) || uncovered++;
+        }
+        return uncovered / Q;
+    }
+
+    async function fillProbTable(Q) {
+        const tbody = document.querySelector("#probTable tbody");
+        tbody.innerHTML = "";
+
+        for (let N = 0; N <= 10; N++) {
+            const theory = f(N);
+            const exp = approx(N, Q);
+
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+            <td>${N}</td>
+            <td>${theory.toFixed(6)}</td>
+            <td>${exp.toFixed(6)}</td>
+        `;
+            tbody.appendChild(row);
+        }
+    }
+
+    function simulateThrows() {
+        let angles = [];
+        while (!fullDiskCovered(angles)) {
+            angles.push(Math.random() * 2 * Math.PI);
+            angles.sort();  // keep sorted for fullDiskCovered
+        }
+        return angles.length;
+    }
+
+    function simulateAverageN(Q) {
+        let ns = [];
+
+        for (let i = 0; i < Q; i++) {
+            ns.push(simulateThrows());
+        }
+
+        let s = 0;
+        for (var i = 0; i < ns.length; i++) {
+            s += ns[i];
+        }
+        return s / Q;
+    }
+
+    async function fillExpectedNTable(Q) {
+        let n = simulateAverageN(Q);
+
+        const tbody = document.querySelector("#expectedN tbody");
+        tbody.innerHTML = "";
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>(work in progress)</td>
+            <td>${n}</td>
+        `;
+        tbody.appendChild(row);
+    }
+
+    async function updateExapmleSvgs() {
+        document.getElementById("examples-uncovered").innerHTML = "";
+        document.getElementById("examples-covered").innerHTML = "";
+
+        [3, 4, 5, 6, 7, 8, 9, 10].forEach(N => {
+            createExampleSvg("examples-uncovered", N, false);
+            createExampleSvg("examples-covered", N, true);
+        });
+
+    }
+
+    async function main() {
+        fillProbTable(10000);
+        fillExpectedNTable(10000);
+
+        const slider = document.getElementById("slider");
+        const nValue = document.getElementById("nValue");
+        const anglesOutput = document.getElementById("anglesOutput");
+
+        function update() {
+            const N = Number(slider.value);
+            nValue.textContent = N;
+
+            const angles = generateNAngles(N);
+            drawSemicircles('example', angles);
+
+            // Format and display angles
+            var output = angles.map(a => a.toFixed(4));
+            output.push(`\nFull disk covered? ${fullDiskCovered(angles) ? "Yes" : "No"}`);
+            anglesOutput.textContent = output.join("  ");
+        }
+
+        slider.addEventListener("input", update);
+
+        update();
+        updateExapmleSvgs();
+    }
+</script>
+
+<style>
+    .example-row {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .example-block {
+        text-align: center;
+    }
+</style>
+
+<body onload="main()">
+    <h1>Random semicircles covering a circle</h1>
+    <p>We talk about semicircles, but it's easier to visualize disk and sectors that cover it.</p>
+
+    <svg id="example" width="600" height="600" viewBox="-1 -1 2 2"></svg>
+
+    <div>
+        <label>
+            N:
+            <input type="range" id="slider" min="0" max="10" value="2" />
+            <span id="nValue">0</span>
+        </label>
+    </div>
+
+    <div id="anglesOutput" style="white-space: pre; font-family: monospace;"></div>
+
+    <hr>
+    <h3>Uncovered examples</h3>
+    <div id="examples-uncovered" class="example-row"></div>
+
+    <h3>Covered examples</h3>
+    <div id="examples-covered" class="example-row"></div>
+
+    <button onclick="updateExapmleSvgs()">Generate new examples</button>
+
+    <hr>
+    <h3>Probability of being covered with N throws</h3>
+    <table id="probTable" border="1" style="border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th>N</th>
+                <th>Formula</th>
+                <th>Experiment</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <hr>
+    <h3>Expected number of throws to cover</h3>
+    <table id="expectedN" border="1" style="border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th>Formula</th>
+                <th>Experiment</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <p><a href='/'>Back to main page</a>
+    <p>&copy; Copyright 2025, Iaroslav Tymchenko
+</body>
