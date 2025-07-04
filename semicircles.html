@@ -1,4 +1,14 @@
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.0.0/es5/tex-mml-chtml.js">
+</script>
 <script>
+
+    // Generate n random angles in [0, 2π)
+    function generateNAngles(n) {
+        let angles = Array.from({ length: n }, () => Math.random() * 2 * Math.PI);
+        angles.sort();
+        return angles;
+    }
+
     function drawSemicircles(svgId, angles) {
         const svg = document.getElementById(svgId);
         svg.innerHTML = "";
@@ -9,7 +19,8 @@
 
         // Create mask
         const mask = document.createElementNS("http://www.w3.org/2000/svg", "mask");
-        mask.setAttribute("id", "mask1");
+        const maskId = svgId + "_mask";
+        mask.setAttribute("id", maskId);
 
         // White rectangle to start with fully visible mask
         const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
@@ -30,7 +41,7 @@
         circle.setAttribute("fill", "lime");
         circle.setAttribute("stroke", "black");
         circle.setAttribute("stroke-width", "0.01");
-        circle.setAttribute("mask", "url(#mask1)");
+        circle.setAttribute("mask", `url(#${maskId})`);
         svg.appendChild(circle);
 
         angles.forEach(theta => {
@@ -79,17 +90,47 @@
         return true;
     }
 
+    function generateExamples(N, shouldBeCovered) {
+        while (true) {
+            const angles = generateNAngles(N);
+            if (fullDiskCovered(angles) === shouldBeCovered) {
+                return angles;
+            }
+        }
+    }
+
+    function createExampleSvg(parentId, N, shouldBeCovered) {
+        const angles = generateExamples(N, shouldBeCovered);
+        const container = document.getElementById(parentId);
+
+        const block = document.createElement("div");
+        block.className = "example-block";
+
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("width", "150");
+        svg.setAttribute("height", "150");
+        svg.setAttribute("viewBox", "-1 -1 2 2");
+        block.appendChild(svg);
+
+        const caption = document.createElement("div");
+        caption.textContent = `N = ${N}, covered: ${shouldBeCovered ? "Yes" : "No"}`;
+        block.appendChild(caption);
+
+        container.appendChild(block);
+        drawSemicircles(svg.id = "tempSvg" + Math.floor(Math.random() * 1000000), angles);
+
+    }
+
     function main() {
         const slider = document.getElementById("slider");
         const nValue = document.getElementById("nValue");
+        const anglesOutput = document.getElementById("anglesOutput");
 
         function update() {
             const N = Number(slider.value);
             nValue.textContent = N;
 
-            // Generate N random angles in [0, 2π)
-            const angles = Array.from({ length: N }, () => Math.random() * 2 * Math.PI);
-            angles.sort();
+            const angles = generateNAngles(N);
             drawSemicircles('example', angles);
 
             // Format and display angles
@@ -101,8 +142,26 @@
         slider.addEventListener("input", update);
 
         update();
+
+        [3, 4, 5, 6, 7, 8, 9, 10].forEach(N => {
+            createExampleSvg("examples-uncovered", N, false);
+            createExampleSvg("examples-covered", N, true);
+        });
     }
 </script>
+
+<style>
+    .example-row {
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .example-block {
+        text-align: center;
+    }
+</style>
 
 <body onload="main()">
     <svg id="example" width="600" height="600" viewBox="-1 -1 2 2"></svg>
@@ -116,5 +175,13 @@
     </div>
 
     <div id="anglesOutput" style="white-space: pre; font-family: monospace;"></div>
+
+    <hr>
+    <h3>Uncovered examples</h3>
+    <div id="examples-uncovered" class="example-row"></div>
+
+    <h3>Covered examples</h3>
+    <div id="examples-covered" class="example-row"></div>
+
 
 </body>
