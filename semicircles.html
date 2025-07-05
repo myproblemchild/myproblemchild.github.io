@@ -1,3 +1,5 @@
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.0.0/es5/tex-mml-chtml.js">
+</script>
 <script>
     // Generate n random angles in [0, 2π)
     function generateNAngles(n) {
@@ -87,17 +89,17 @@
         return true;
     }
 
-    function generateExamples(N, shouldBeCovered) {
+    function generateExamples(n, shouldBeCovered) {
         while (true) {
-            const angles = generateNAngles(N);
+            const angles = generateNAngles(n);
             if (fullDiskCovered(angles) === shouldBeCovered) {
                 return angles;
             }
         }
     }
 
-    function createExampleSvg(parentId, N, shouldBeCovered) {
-        const angles = generateExamples(N, shouldBeCovered);
+    function createExampleSvg(parentId, n, shouldBeCovered) {
+        const angles = generateExamples(n, shouldBeCovered);
         const container = document.getElementById(parentId);
 
         const block = document.createElement("div");
@@ -110,7 +112,7 @@
         block.appendChild(svg);
 
         const caption = document.createElement("div");
-        caption.textContent = `N = ${N}, covered: ${shouldBeCovered ? "Yes" : "No"}`;
+        caption.textContent = `n = ${n}, covered: ${shouldBeCovered ? "Yes" : "No"}`;
         block.appendChild(caption);
 
         container.appendChild(block);
@@ -119,7 +121,7 @@
     }
 
     let f = (n) => n / Math.pow(2, n - 1);
-    function approx(n, Q) {
+    function approxUncovered(n, Q) {
         let uncovered = 0;
         for (let i = 0; i < Q; i++) {
             fullDiskCovered(generateNAngles(n)) || uncovered++;
@@ -131,14 +133,14 @@
         const tbody = document.querySelector("#probTable tbody");
         tbody.innerHTML = "";
 
-        for (let N = 0; N <= 10; N++) {
-            const theory = f(N);
-            const exp = approx(N, Q);
+        for (let n = 1; n <= 10; n++) {
+            const theory = f(n);
+            const exp = approxUncovered(n, Q);
 
             const row = document.createElement("tr");
 
             row.innerHTML = `
-            <td>${N}</td>
+            <td>${n}</td>
             <td>${theory.toFixed(6)}</td>
             <td>${exp.toFixed(6)}</td>
         `;
@@ -177,7 +179,7 @@
         const row = document.createElement("tr");
 
         row.innerHTML = `
-            <td>(work in progress)</td>
+            <td>5</td>
             <td>${n}</td>
         `;
         tbody.appendChild(row);
@@ -187,9 +189,9 @@
         document.getElementById("examples-uncovered").innerHTML = "";
         document.getElementById("examples-covered").innerHTML = "";
 
-        [3, 4, 5, 6, 7, 8, 9, 10].forEach(N => {
-            createExampleSvg("examples-uncovered", N, false);
-            createExampleSvg("examples-covered", N, true);
+        [3, 4, 5, 6, 7, 8, 9, 10].forEach(n => {
+            createExampleSvg("examples-uncovered", n, false);
+            createExampleSvg("examples-covered", n, true);
         });
 
     }
@@ -203,10 +205,10 @@
         const anglesOutput = document.getElementById("anglesOutput");
 
         function update() {
-            const N = Number(slider.value);
-            nValue.textContent = N;
+            const n = Number(slider.value);
+            nValue.textContent = n;
 
-            const angles = generateNAngles(N);
+            const angles = generateNAngles(n);
             drawSemicircles('example', angles);
 
             // Format and display angles
@@ -243,7 +245,7 @@
 
     <div>
         <label>
-            N:
+            n:
             <input type="range" id="slider" min="0" max="10" value="2" />
             <span id="nValue">0</span>
         </label>
@@ -261,11 +263,21 @@
     <button onclick="updateExapmleSvgs()">Generate new examples</button>
 
     <hr>
-    <h3>Probability of being covered with N throws</h3>
+    <h3>Probability of being not-covered after n throws</h3>
+
+    <p>If we throw n random semicircles, what is the probability that the circle is covered?</p>
+    <p>Consider any point \(p\) on the circle. When we throw a random semicircle, \(p\) is not covered with probability
+        \(\frac{1}{2}\). After \(n\) throws, the point is not covered with probability \(\frac{1}{2^n}\).
+        But \(n\) semicircles split the circle into \(2n\) regions. If any point of the region is not covered, the the
+        whole region is not covered. Hence, the probability that the circle is not completely covered is
+        \(2n \frac{1}{2^n} = \frac{n}{2^{n-1}}\).
+        This formula works for values \(n \ge 1\)
+    </p>
+
     <table id="probTable" border="1" style="border-collapse: collapse;">
         <thead>
             <tr>
-                <th>N</th>
+                <th>n</th>
                 <th>Formula</th>
                 <th>Experiment</th>
             </tr>
@@ -274,7 +286,31 @@
     </table>
 
     <hr>
-    <h3>Expected number of throws to cover</h3>
+    <h3>Expected number of throws to cover the circle</h3>
+
+    <p>If \(f(n)\) is a probability of being not fully covered after \(n\) throws, then probability of being covered is
+        \(1-f(n)\).
+        However, this means that the circle could have been covered after any of the throws. Instead, we are interested
+        in
+        knowing the probability of the circle being covered after exactly \(n\) throws.
+        To find this, we observe that \(g(n)=f(n-1)-f(n)\), i.e. it's precisely the drop of the probability of remaining
+        uncovered.
+        Then \( \displaystyle E[X] = \sum_{X=0}^{\infty} X*g(X) = \sum_{X=0}^{\infty} X*(f(X-1)-f(X))\).</p>
+    <p>
+        So have \(g(n) = f(n-1) - f(n) = \frac{n-1}{2^(n-2)} - \frac{n}{2^n} = \frac{n-2}{2^n}\).
+        This formula works for \( n \ge 2\).
+        In addition we define \(g(0)=0, g(1)=0\) by common sense (impossible to cover the circle with 0 or 1
+        semicircles).
+    </p>
+    <p>
+        As a sanity check, \( \displaystyle \sum_{n=0}^{\infty}g(n) = 1 \)
+    </p>
+    <p>
+        Finally, the expected number of throws is then
+        \( \displaystyle E[X] = \sum_{X=0}^{\infty} X*g(X) = \sum_{X=3}^{\infty} \frac{X(X-2)}{2^{X-1}} = 5\)
+    </p>
+
+
     <table id="expectedN" border="1" style="border-collapse: collapse;">
         <thead>
             <tr>
