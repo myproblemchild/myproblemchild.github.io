@@ -1,5 +1,18 @@
+<html>
+<style>
+    #cy {
+        width: 800px;
+        height: 500px;
+        border: 1px solid #ccc;
+        display: block;
+    }
+</style>
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.17.1/build/styles/default.min.css">
+<script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.17.1/build/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.0.0/es5/tex-mml-chtml.js">
 </script>
+<script src="https://unpkg.com/cytoscape@3.24.0/dist/cytoscape.min.js"></script>
 <script>
     // Generate n random angles in [0, 2π)
     function generateNAngles(n) {
@@ -196,6 +209,35 @@
 
     }
 
+    function markovChainIntegral() {
+        const N = 10000;
+        const alphas = Array.from({ length: N }, (_, i) => i * Math.PI / (N - 1));
+        const da = alphas[1] - alphas[0];
+        const h = new Array(N).fill(0);
+
+        function s(alpha) {
+            return (Math.PI - alpha) / (2 * Math.PI);
+        }
+
+        for (let i = 0; i < N; i++) {
+            const alpha = alphas[i];
+            if (i === 0) {
+                h[i] = 1 / (1 - s(alpha));
+            } else {
+                // Trapezoidal approximation of integral
+                let integral = 0;
+                for (let j = 0; j < i; j++) {
+                    integral += h[j];
+                }
+                integral *= da;
+
+                h[i] = (1 + (1 / Math.PI) * integral) / (1 - s(alpha));
+            }
+        }
+
+        return h[N - 1];
+    }
+
     async function main() {
         fillProbTable(10000);
         fillExpectedNTable(10000);
@@ -218,6 +260,8 @@
         }
 
         slider.addEventListener("input", update);
+
+        document.getElementById("integral-answer").innerHTML = `${1 + markovChainIntegral()}`;
 
         update();
         updateExapmleSvgs();
@@ -274,6 +318,17 @@
         This formula works for values \(n \ge 1\)
     </p>
 
+    <pre><code>
+let f = (n) => n / Math.pow(2, n - 1);
+function approxUncovered(n, Q) {
+    let uncovered = 0;
+    for (let i = 0; i < Q; i++) {
+        fullDiskCovered(generateNAngles(n)) || uncovered++;
+    }
+    return uncovered / Q;
+}
+</code></pre>
+
     <table id="probTable" border="1" style="border-collapse: collapse;">
         <thead>
             <tr>
@@ -322,6 +377,155 @@
         </tbody>
     </table>
 
+    <hr>
+    <h3>Markov chain</h3>
+    <p>We can model the process via Markov chain. We have a state \(\mu(\alpha)\) for \( \forall\, \alpha \in [0, 2\pi]
+        \).</p>
+    <p>From each state \(\mu(\alpha)\) we have 3 possibilities:
+    <ul>
+        <li>Stay in that state with probability \(s(\alpha) = \frac{\pi-\alpha}{2\pi}\)</li>
+        <li>Go to 0 with probability \(z(\alpha) = \frac{\pi-\alpha}{2\pi}\)</li>
+        <li>Go to lower angle \(\beta\) with pdf \( \frac{2\alpha}{2\pi}\frac{1}{\alpha}=\frac{1}{\pi} \) (note: doesn't
+            depend on \(\beta\)!)</li>
+    </ul>
+    </p>
+    <p>
+        There are some special states:
+    <ul>
+        <li>\(\mu(2\pi)\) - we throw a semicircle and go strictly to \(\mu(\pi)\). It's impossible to stay at \(2\pi\)
+            or go to 0.</li>
+        <li>\(\mu(\theta) \forall \theta \in (\pi, 2\pi)\) - unreachable states.</li>
+    </ul>
+    </p>
+
+    <div id="cy"></div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            cytoscape({
+                container: document.getElementById('cy'),
+                elements: [
+                    { data: { id: '2pi' }, position: { x: 100, y: 200 } },
+                    { data: { id: 'pi' }, position: { x: 250, y: 200 } },
+                    { data: { id: 'alpha' }, position: { x: 400, y: 200 } },
+                    { data: { id: 'beta' }, position: { x: 550, y: 200 } },
+                    { data: { id: '0' }, position: { x: 700, y: 200 } },
+
+                    // original edges
+                    { data: { source: '2pi', target: 'pi' } },
+                    { data: { source: 'pi', target: 'alpha' } },
+                    { data: { source: 'alpha', target: 'beta', label: 'p(alpha, beta)' } },
+                    { data: { source: 'beta', target: '0' } },
+
+                    // new edges from alpha
+                    { data: { source: 'alpha', target: 'alpha', label: 's(alpha)' } },
+                    { data: { source: 'alpha', target: '0', label: 'z(alpha)' } }
+                ],
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'label': 'data(id)',
+                            'text-valign': 'center',
+                            'color': '#fff',
+                            'background-color': '#0074D9',
+                            'width': '80',
+                            'height': '80',
+                            'font-size': '20px'
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'width': 3,
+                            'line-color': '#888',
+                            'target-arrow-color': '#888',
+                            'target-arrow-shape': 'triangle',
+                            'curve-style': 'bezier',
+                            'control-point-distance': 60,
+                            'control-point-weight': 0.5,
+                            'opacity': 0.9,
+                            'label': 'data(label)',
+                            'font-size': '10px',
+                            'text-rotation': 'autorotate',
+                            'color': '#000',
+                            'text-background-color': '#fff',
+                            'text-background-opacity': 1,
+                            'text-background-shape': 'roundrectangle',
+                            'text-margin-y': -10
+                        }
+                    },
+                    {
+                        selector: 'edge[source = "alpha"][target = "alpha"]',
+                        style: {
+                            'loop-direction': '0deg',
+                            'loop-sweep': '-30deg',
+                            'width': 3
+                        }
+                    },
+                    {
+                        selector: 'edge[source = "alpha"][target = "0"]',
+                        style: {
+                            'curve-style': 'unbundled-bezier',
+                            'control-point-distances': [-150, -150],
+                            'control-point-weights': [0.2, 0.8],
+                            'width': 3
+                        }
+                    }
+                ],
+                layout: {
+                    name: 'preset',
+                    padding: 50
+                }
+            });
+        });
+    </script>
+
+    <p>Finally we can write out a recurrent equation for the expected number of steps:
+    <ul>
+        <li>\( \displaystyle \phi(\alpha) = 1 + s(\alpha)\phi(\alpha) + z(\alpha)\phi(0) + \int_0^\alpha p(\alpha,
+            \beta)\phi(\beta)d\beta, \alpha \ge \pi\)</li>
+        <li>\( \displaystyle \phi(\alpha) = 1 + s(\alpha)\phi(\alpha) + \frac{1}{\pi}\int_0^\alpha \phi(\beta)d\beta,
+            \alpha \ge \pi \)
+        </li>
+    </ul>
+    </p>
+    <p>TODO: solve analytically</p>
+
+    <pre><code>
+function markovChainIntegral() {
+    const N = 10000;
+    const alphas = Array.from({ length: N }, (_, i) => i * Math.PI / (N - 1));
+    const da = alphas[1] - alphas[0];
+    const h = new Array(N).fill(0);
+
+    function s(alpha) {
+        return (Math.PI - alpha) / (2 * Math.PI);
+    }
+
+    for (let i = 0; i < N; i++) {
+        const alpha = alphas[i];
+        if (i === 0) {
+            h[i] = 1 / (1 - s(alpha));
+        } else {
+            // Trapezoidal approximation of integral
+            let integral = 0;
+            for (let j = 0; j < i; j++) {
+                integral += h[j];
+            }
+            integral *= da;
+
+            h[i] = (1 + (1 / Math.PI) * integral) / (1 - s(alpha));
+        }
+    }
+
+    // h[N-1] is h(pi).
+    return 1 + h[N - 1];
+}</code></pre>
+    <p>The solution is then given by markovChainIntegral() + 1:</p>
+    <p id="integral-answer"></p>
+
     <p><a href='/'>Back to main page</a>
     <p>&copy; Copyright 2025, Iaroslav Tymchenko
 </body>
+
+</html>
