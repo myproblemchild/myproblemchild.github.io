@@ -222,7 +222,7 @@
         row.innerHTML = `
             <td>5</td>
             <td>${n}</td>
-            `;
+        `;
         tbody.appendChild(row);
     }
 
@@ -269,7 +269,7 @@
     async function main() {
         fillProbTable(10000);
         fillExpectedNTable(10000);
-        fillExpectedNTable2(1000);
+        fillExpectedNTable2(10000);
 
         const slider = document.getElementById("slider");
         const nValue = document.getElementById("nValue");
@@ -284,7 +284,7 @@
 
             // Format and display angles
             var output = angles.map(a => a.toFixed(4));
-            output.push(`\nFull disk covered ? ${fullDiskCovered(angles) ? "Yes" : "No"} `);
+            output.push(`\nFull disk covered? ${fullDiskCovered(angles) ? "Yes" : "No"}`);
             anglesOutput.textContent = output.join("  ");
         }
 
