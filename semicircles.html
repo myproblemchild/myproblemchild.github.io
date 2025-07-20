@@ -161,20 +161,48 @@
         }
     }
 
-    function simulateThrows() {
-        let angles = [];
+    // How many throws on average to cover circle if we have already covered alpha (pi <= alpha <= 2pi).
+    async function fillExpectedNTable2(Q) {
+        const tbody = document.querySelector("#expectedN2 tbody");
+        tbody.innerHTML = "";
+
+        const steps = 20;
+        const dv = Math.PI / steps;
+
+        let linear = (uncovered) => 2 + 2 * uncovered / Math.PI;
+
+        let covered = Math.PI;
+        for (let step = 0; step < steps; step++) {
+            const uncovered = 2 * Math.PI - covered;
+            const theory = linear(uncovered);
+            const exp = simulateAverageN(Q, [0, covered - Math.PI]);
+
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+            <td>${uncovered}</td>
+            <td>${theory.toFixed(6)}</td>
+            <td>${exp.toFixed(6)}</td>`
+            tbody.appendChild(row);
+
+            covered += dv;
+        }
+    }
+
+    function simulateThrows(starting_angles) {
+        let angles = [...starting_angles];
         while (!fullDiskCovered(angles)) {
             angles.push(Math.random() * 2 * Math.PI);
             angles.sort();  // keep sorted for fullDiskCovered
         }
-        return angles.length;
+        return angles.length - starting_angles.length;
     }
 
-    function simulateAverageN(Q) {
+    function simulateAverageN(Q, starting_angles) {
         let ns = [];
 
         for (let i = 0; i < Q; i++) {
-            ns.push(simulateThrows());
+            ns.push(simulateThrows(starting_angles));
         }
 
         let s = 0;
@@ -185,16 +213,16 @@
     }
 
     async function fillExpectedNTable(Q) {
-        let n = simulateAverageN(Q);
+        let n = simulateAverageN(Q, []);
 
         const tbody = document.querySelector("#expectedN tbody");
         tbody.innerHTML = "";
         const row = document.createElement("tr");
 
         row.innerHTML = `
-            <td>5</td>
-            <td>${n}</td>
-        `;
+                < td > 5</td >
+                    <td>${n}</td>
+            `;
         tbody.appendChild(row);
     }
 
@@ -241,6 +269,7 @@
     async function main() {
         fillProbTable(10000);
         fillExpectedNTable(10000);
+        fillExpectedNTable2(1000);
 
         const slider = document.getElementById("slider");
         const nValue = document.getElementById("nValue");
@@ -255,7 +284,7 @@
 
             // Format and display angles
             var output = angles.map(a => a.toFixed(4));
-            output.push(`\nFull disk covered? ${fullDiskCovered(angles) ? "Yes" : "No"}`);
+            output.push(`\nFull disk covered ? ${fullDiskCovered(angles) ? "Yes" : "No"} `);
             anglesOutput.textContent = output.join("  ");
         }
 
@@ -521,8 +550,39 @@ function markovChainIntegral() {
     // h[N-1] is h(pi).
     return 1 + h[N - 1];
 }</code></pre>
-    <p>The solution is then given by markovChainIntegral() + 1:</p>
+    <p>The solution is then given by markovChainIntegral():</p>
     <p id="integral-answer"></p>
+
+    <h3>Analytical solution</h3>
+    <p>I haven't able to solve for \(phi\) strictly analytically, but just looking at the chart might help here.</p>
+    <img src="./files/semicircles_phi.png" style="max-width:500px;max-height:500px" />
+    <p>Clearly \(phi\) is a linear function, \(phi(x) = 2 + \frac{2x}{\pi}\ , x \in (0, \pi) \)</p>
+
+    <p>Note that the chart doesn't represent some additional semantic knowledge we have, namely:</p>
+    <ul>
+        <li>\(\phi(0)=0\) (disontinuity)</li>
+        <li>\(\lim_{x \to 0} \phi(x) = 2\) (this actually makes sense if you think about it: when \(x \to 0\), we are
+            basically talking about one point, and that point has probability of being covered \(\frac{1}{2}\)).
+        </li>
+        <li>\(\phi(\pi)=4\)</li>
+        <li>\(\phi(2\pi)=\phi(\pi) + 1\)</li>
+        <li>\(\phi(\alpha)\) is undefined for \(\alpha \in (\pi, 2\pi)\)</li>
+    </ul>
+
+    <p>To verify this, let's plot an average number of throws to be taken when the remaining uncovered angle is
+        \(\alpha\).</p>
+    <p>
+    <table id="expectedN2" border="1" style="border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th>\(\alpha\)</th>
+                <th>Formula</th>
+                <th>Experiment</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    </p>
 
     <p><a href='/'>Back to main page</a>
     <p>&copy; Copyright 2025, Iaroslav Tymchenko
