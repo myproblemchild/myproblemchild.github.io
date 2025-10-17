@@ -1,0 +1,276 @@
+<head>
+<title>Grid problem, range sum query, Fenwick tree</title>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.0.0/es5/tex-mml-chtml.js"></script>
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+
+<link rel="stylesheet"
+      href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.17.1/build/styles/default.min.css">
+<script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.17.1/build/highlight.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/dracula.min.css">
+<script>hljs.initHighlightingOnLoad();</script>
+</head>
+
+
+<h1><center>Example for range sum query (wip)</center></h1>
+
+I stumbled upon an interesting problem <a href="#footnote-1">[1]</a> a while ago: 
+
+<pre>
+--- Day 6: Probably a Fire Hazard ---
+Because your neighbors keep defeating you in the holiday house decorating contest year after year, you've decided to deploy one million lights in a 1000x1000 grid.
+Furthermore, because you've been especially nice this year, Santa has mailed you instructions on how to display the ideal lighting configuration.
+Lights in your grid are numbered from 0 to 999 in each direction; the lights at each corner are at 0,0, 0,999, 999,999, and 999,0.
+The instructions include whether to turn on, turn off, or toggle various inclusive ranges given as coordinate pairs. Each coordinate pair represents opposite corners of a rectangle, inclusive;
+a coordinate pair like 0,0 through 2,2 therefore refers to 9 lights in a 3x3 square. The lights all start turned off.
+To defeat your neighbors this year, all you have to do is set up your lights by doing the instructions Santa sent you in order.
+For example:
+turn on 0,0 through 999,999 would turn on (or leave on) every light.
+toggle 0,0 through 999,0 would toggle the first line of 1000 lights, turning off the ones that were on, and turning on the ones that were off.
+turn off 499,499 through 500,500 would turn off (or leave off) the middle four lights.
+After following the instructions, how many lights are lit?
+---
+</pre>
+
+<h2>Auxiliary setup</h2>
+To compare different approaches, 1000x1000 grid turns out to be too small. To spare myself of having to generate the test cases, I will:
+use the input provided by AOC but randomly shuffled:
+sort -R original_input.txt > shuffled_input.txt
+introduce a coefficient k. The grid size becomes k*1000 x k*1000 and each input coordinate is multiplied by k. Setting k=1 means solving the exact original problem.
+
+Naive solution
+The naive solution is to initialize the 1000x1000 grid, consume input and update the grid according to instructions and finally count how many grid cells are on.
+
+A simple optimization can be done to maintain the numbers online, thus not needing to do the final grid walkthrough, but that would still leave the worst case runtime at O(r * N^2) (r is a number of rectangles).
+
+I’ll use the input provided by AOC but randomly shuffled:
+<pre><code class='bash'>
+sort -R input_original.txt > src/input_shuffled.txt
+./target/release/bin 1 naive < src/input_shuffled.txt
+211412
+</code></pre>
+
+<h2>Optimized solution</h2>
+One thing that struck me is we, human, can quickly compute the answer for the case when 2 huge rectangles overlap by 1:
+<pre><code class='bash'>
+turn on 0,0 through 500,500
+turn on 500,500 through 999,999
+turn off 0,0 through 500,500
+toggle 500,500 through 999,999
+</code></pre>
+
+Note that running this with k=1, k=100, k=1000 should obviously produce the same result of 1 overlapping cell, and humans would be quick to realize that.
+However, a naive solution would take progressively longer as we increase k.
+
+The idea of an optimized approach is as follows. We can sweep a vertical line and maintain the set of rectangles that fall into the current horizontal segment.
+
+Code 1: sweeping vertical line
+<pre><code class='rs'>
+for pair in events_by_x_coord.iter() {
+    let x = pair.0;
+    if let Some(x_prev_value) = x_prev {
+        res += process_vertical_stripe(
+            x_prev_value,
+            *x,
+            &active_set_within_vertical_stripe,
+            &events_by_y_coord,
+            z_index,
+        );
+    }
+    for e in pair.1 {
+        if e.is_open {
+            active_set_within_vertical_stripe.insert(e.z_index);
+        } else {
+            active_set_within_vertical_stripe.remove(&e.z_index);
+        }
+
+        x_prev = Some(*pair.0);
+    }
+}
+</code></pre>
+
+For a given horizontal segment, we can then sweep another - horizontal - line upwards and maintain a set of rectangles in the current vertical segment.
+While doing that we can check whether the rectangle is in the horizontal segment, that way having an exact set of rectangles that are present in the current rectangular patch.
+
+Code 2: sweeping horizontal line
+<pre><code class="rust">
+for p in events_by_y_coord.iter() {
+    let y = p.0;
+    if let Some(y_prev_val) = y_prev {
+        if !active_set_within_horizontal_stripe.is_empty() {
+            res += process_patch(
+                x_prev_val,
+                x,
+                y_prev_val,
+                *y,
+                &active_on_within_horizontal_stripe,
+                &active_off_within_horizontal_stripe,
+                &fw_toggle,
+                total_rectangles,
+            );
+        }
+    }
+
+    y_prev = Some(*y);
+
+    for e in p.1.iter() {
+        if !active_set_within_vertical_stripe.contains(&e.z_index) {
+            continue;
+        }
+
+        match e.is_open {
+            true => {
+                active_set_within_horizontal_stripe.insert(e.z_index);
+                match e.operation {
+                    Operation::On => {
+                        active_on_within_horizontal_stripe.insert(e.z_index);
+                    }
+                    Operation::Off => {
+                        active_off_within_horizontal_stripe.insert(e.z_index);
+                    }
+                    Operation::Toggle => {
+                        active_toggle_within_horizontal_stripe.insert(e.z_index);
+                        fw_toggle.inc(e.z_index as usize);
+                    }
+                }
+            }
+            false => {
+                active_set_within_horizontal_stripe.remove(&e.z_index);
+                match e.operation {
+                    Operation::On => {
+                        active_on_within_horizontal_stripe.remove(&e.z_index);
+                    }
+                    Operation::Off => {
+                        active_off_within_horizontal_stripe.remove(&e.z_index);
+                    }
+                    Operation::Toggle => {
+                        active_toggle_within_horizontal_stripe.remove(&e.z_index);
+                        fw_toggle.dec(e.z_index as usize);
+                    }
+                }
+            }
+        }
+    }
+}
+</code></pre>
+
+The next question is how to process a separate patch.
+The basic idea is this: any sequence of “on”, “off” and “toggle” is equivalent to “on” or “off” followed by some numbers of toggles.
+For example, 1:“on”, 2:“off”, 3:“off”, 4:“on”, 5:“toggle”, 6:“on”, 7:“toggle” is equivalent to just 6:“on”, 7:“toggle” because the “on” at step 6 makes it irrelevant what was the prior sequence.
+
+Code 3: figuring out the state of the patch
+<pre><code class="rust">
+fn process_patch(
+    left: u32,
+    right: u32,
+    bottom: u32,
+    top: u32,
+    turn_on: &BTreeSet<i32>,
+    turn_off: &BTreeSet<i32>,
+    fw_toggle_active: &FenwickTree,
+    total_rectangles: i32,
+) -> u32 {
+    let mut base_val = false;
+    let mut last_turn: i32 = *turn_off.last().unwrap_or(&-1);
+    if let Some(turn_on_last) = turn_on.last() {
+        if *turn_on_last > last_turn {
+            last_turn = *turn_on_last;
+            base_val = true;
+        }
+    }
+
+    let toggles_after_last_turn = fw_toggle_active.sum_range(last_turn + 1, total_rectangles - 1);
+    if toggles_after_last_turn % 2 == 1 {
+        base_val = !base_val;
+    }
+
+    if base_val {
+        let h = (right - left) as u32;
+        let v = (top - bottom) as u32;
+        h * v
+    } else {
+        0
+    }
+}
+</code></pre>
+
+So we need to maintain the sorted set of “on” and “off” rectangles to quickly identify the last “on” or “off”.
+After that we need to know how many toggles happened thereafter - range sum query would work, and one way to do it efficiently is via fenwick tree.
+
+Finally, when we know the last action (“on” or “off”) and how many toggles happened afterwards, we can compute the state of the whole patch (either “on” or “off).
+And knowing the area of the patch we can then add it to the final result.
+
+<img src="./files/grid_problem.png" style="max-width:500px;max-height:500px" />
+<p>
+In this example we have 3 rectangles: 1, 2, 3.
+We have 5 segments between vertical lines: V1, V2, ..., V5.
+We have 5 segments between horizontal lines: H1, H2, ... H5.
+
+<h2>Runtime analysis</h2>
+<p>To process input: $$ R \cdot \log(R) $$</p>
+<p>To compute result: $$ R^2 \cdot \log^2R $$</p>
+
+<h2>Fenwick tree implementation</h2>
+<a href="#footnote-2">[2]</a>
+<pre>
+<code class="rust">
+pub struct FenwickTree {
+    size: usize,
+    t: Vec<u32>,
+}
+
+impl FenwickTree {
+    pub fn new(n: usize) -> FenwickTree {
+        FenwickTree {
+            size: n,
+            t: vec![0; n as usize],
+        }
+    }
+
+    pub fn sum(&self, mut range: i32) -> u32 {
+        let mut res: u32 = 0;
+        while range >= 0 {
+            res += self.t[range as usize];
+            range = (range & (range + 1)) - 1;
+        }
+        res
+    }
+
+    pub fn inc(&mut self, mut i: usize) {
+        while i < self.size {
+            self.t[i] += 1;
+            i = i | (i + 1);
+        }
+    }
+
+    pub fn dec(&mut self, mut i: usize) {
+        while i < self.size {
+            self.t[i] -= 1;
+            i = i | (i + 1);
+        }
+    }
+
+    pub fn sum_range(&self, l: i32, r: i32) -> u32 {
+        self.sum(r) - self.sum(l - 1)
+    }
+}    
+</code>
+</pre>
+
+<h2>Experiments</h2>
+wip
+The original provided input is not challenging enough to make a difference. To address that, let’s introduce a scaling factor k.
+Now, the grid is k1000 x k1000 and input coordinates are multiplied by k. For various values of k here’s the comparison between naive and optimized solution:
+Runtime (wip)
+Memory (wip)
+
+<h2>Full code and references</h2>
+<p id="footnote-1"><b>[1]</b> The original problem is taken from here: <a href="https://adventofcode.com/2015/day/6">https://adventofcode.com/2015/day/6</a></p>
+<p id="footnote-2"><b>[2]</b> The fenwick tree implementation is a rip-off of this: <a href="http://e-maxx.ru/algo/fenwick_tree">http://e-maxx.ru/algo/fenwick_tree</a></p>
+<p id="footnote-3"><b>[3]</b> Full source code directory: <a href="./grid-problem-rust">link</a></p>
+<p id="footnote-4"><b>[4]</b> Test file input_shuffled.txt: wip</p>
+<p id="footnote-5"><b>[5]</b> Test file “easy_for_humans.txt”: wip</p>
+<p id="footnote-5"><b>[6]</b> Full code of main.rs: wip</p>
